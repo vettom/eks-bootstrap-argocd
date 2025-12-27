@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gateway
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  destination:
+    namespace: gateway
+    server: https://kubernetes.default.svc
+  project: core
+  syncPolicy:
+    automated: {}
+    syncOptions:
+      - CreateNamespace=true
+  source:
+    repoURL: docker.io/envoyproxy
+    chart: gateway-helm
+    targetRevision: { { .Values.gateway.version } }
+    helm:
+      valuesObject:
+        deployment:
+          replicas: { { .Values.gateway.replicas } }
+        certgen:
+          job:
+            ttlSecondsAfterFinished: 60

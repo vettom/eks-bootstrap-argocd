@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-dns
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  destination:
+    namespace: external-dns
+    server: https://kubernetes.default.svc
+  project: core
+  syncPolicy:
+    automated: {}
+    syncOptions:
+      - CreateNamespace=true
+  source:
+    repoURL: https://kubernetes-sigs.github.io/external-dns
+    chart: external-dns
+    targetRevision: {{ .Values.externaldns.version }}
+    helm:
+      valuesObject:
+        policy: sync
+        serviceAccount:
+          name: external-dns-controller-{{ .Values.cluster_name }}
+          annotations:
+            eks.amazonaws.com/role-arn: arn:aws:iam::{{ .Values.aws_account_id }}:role/external-dns-controller-{{ .Values.cluster_name }}
+        sources:
+          - ingress
+          - gateway-httproute
+        domainFilters:
+          - {{ .Values.environment }}.bauerradio.com
+          - {{ .Values.environment }}.hellorayo.co.uk
+          {{- range .Values.externaldns.dnsZones }}
+          - "{{ . }}"
+          {{- end }}  
+        txtOwnerId: {{ .Values.cluster_name }}
+        serviceMonitor:
+          enabled: true
+          additionalLabels:
+             release: kube-prometheus-stack

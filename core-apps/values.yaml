@@ -1,0 +1,9 @@
+domain: "vettom.online"
+argocd:
+  version: "9.2.0"
+
+gateway:
+  version: "1.6.1"
+  replicas: 1
+metricsserver:
+  version: "3.13.0"
