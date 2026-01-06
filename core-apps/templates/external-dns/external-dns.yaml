@@ -10,7 +10,7 @@ spec:
   destination:
     namespace: external-dns
     server: https://kubernetes.default.svc
-  project: core
+  project: default
   syncPolicy:
     automated: {}
     syncOptions:
