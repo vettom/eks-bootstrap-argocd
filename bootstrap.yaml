@@ -14,7 +14,5 @@ spec:
     - repoURL: https://github.com/vettom/eks-bootstrap-argocd.git
       targetRevision: HEAD
       path: core-apps
-      directory:
-        recurse: true
   syncPolicy:
     automated: {}
