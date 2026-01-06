@@ -5,17 +5,25 @@ cluster_name: "eks-auto-demo"
 argocd:
   version: "9.2.0"
   argo_url_prefix: "argocd"
+
 externaldns:
   version: "1.19.0"
   dnsZones:
     - "vettom.online"
     - "*.dev.vettom.online"
     - "*.prd.vettom.online"
+
 certmanager:
   version: "v1.19.2"
   replicaCount: 1
+
 metricsserver:
   version: "3.13.0"
+
 gateway:
   version: "v1.6.1"
   replicas: 1
+
+prometheus_stack:
+  version: "80.6.0"
+  grafana_url_prefix: "grafana"

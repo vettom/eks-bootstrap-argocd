@@ -1,0 +1,48 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus-stack
+  annotations:
+    argocd.argoproj.io/sync-wave: "-50"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  destination:
+    namespace: monitoring
+    server: https://kubernetes.default.svc
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: kube-prometheus-stack
+      targetRevision: {{ .Values.prometheus_stack.version }}
+      helm:
+        valuesObject:
+          crds:
+            enabled: false
+          commonLabels:
+            prometheus_server: kube-prometheus-stack
+          prometheus:
+            service:
+              type: ClusterIP
+              serviceMonitorSelector:
+                matchLabels:
+                  release: kube-prometheus-stack
+              enableRemoteWriteReceiver: true
+          grafana:
+            grafana.ini:
+              auth.anonymous:
+                enabled: true
+                org_name: Main Org.
+                org_role: Viewer
+              server:
+                root_url: "https://{{ .Values.prometheus_stack.grafana_url_prefix }}.{{ .Values.domain }}"
+            service:
+              type: ClusterIP
+            enabled: true
+          alertmanager:
+            enabled: false
