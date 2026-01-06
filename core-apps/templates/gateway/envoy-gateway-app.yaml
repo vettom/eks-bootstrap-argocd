@@ -18,11 +18,11 @@ spec:
   source:
     repoURL: docker.io/envoyproxy
     chart: gateway-helm
-    targetRevision: { { .Values.gateway.version } }
+    targetRevision: {{ .Values.gateway.version }}
     helm:
       valuesObject:
         deployment:
-          replicas: { { .Values.gateway.replicas } }
+          replicas: {{ .Values.gateway.replicas }}
         certgen:
           job:
             ttlSecondsAfterFinished: 60
