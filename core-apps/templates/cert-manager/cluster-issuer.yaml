@@ -16,4 +16,4 @@ spec:
             - "*.vettom.online"
         dns01:
           route53:
-            region: eu-west-1s
+            region: eu-west-1
