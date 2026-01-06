@@ -24,6 +24,9 @@ gateway:
   version: "v1.6.1"
   replicas: 1
 
+prometheus_crds:
+  version: "25.0.1"
+  
 prometheus_stack:
   version: "80.6.0"
   grafana_url_prefix: "grafana"
