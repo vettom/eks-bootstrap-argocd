@@ -4,6 +4,8 @@ metadata:
   name: external-dns
   finalizers:
     - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
 spec:
   destination:
     namespace: external-dns
@@ -20,21 +22,22 @@ spec:
     helm:
       valuesObject:
         policy: sync
-        serviceAccount:
-          name: external-dns-controller-{{ .Values.cluster_name }}
-          annotations:
-            eks.amazonaws.com/role-arn: arn:aws:iam::{{ .Values.aws_account_id }}:role/external-dns-controller-{{ .Values.cluster_name }}
         sources:
           - ingress
           - gateway-httproute
         domainFilters:
-          - {{ .Values.environment }}.bauerradio.com
-          - {{ .Values.environment }}.hellorayo.co.uk
-          {{- range .Values.externaldns.dnsZones }}
+        {{- range .Values.externaldns.dnsZones }}
           - "{{ . }}"
-          {{- end }}  
+        {{- end }}  
         txtOwnerId: {{ .Values.cluster_name }}
+        resources:
+          limits:
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 64Mi
         serviceMonitor:
           enabled: true
           additionalLabels:
              release: kube-prometheus-stack
+          

@@ -4,6 +4,8 @@ metadata:
   name: cert-manager
   finalizers:
     - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "-9"
 spec:
   destination:
     namespace: cert-manager
@@ -16,28 +18,19 @@ spec:
   source:
     repoURL: https://charts.jetstack.io
     chart: cert-manager
-    targetRevision: {{ .Values.certmanager.version }}
+    targetRevision: { { .Values.certmanager.version } }
     helm:
       valuesObject:
-        installCRDs: true
+        crds:
+          enabled: true
+          keep: true
         namespace: "cert-manager"
-        replicaCount: {{ .Values.certmanager.replicaCount }}
-        config:
-          apiVersion: controller.config.cert-manager.io/v1alpha1
-          kind: ControllerConfiguration
-          enableGatewayAPI: true
+        replicaCount: { { .Values.certmanager.replicaCount } }
         securityContext:
           fsGroup: 1001
         serviceAccount:
           create: true
-          name: "cert-manager-{{ .Values.cluster_name }}"
-          annotations:
-            eks.amazonaws.com/role-arn: arn:aws:iam::{{ .Values.aws_account_id }}:role/cert-manager-{{ .Values.cluster_name }}
-        podDisruptionBudget:
-          enabled: true
-          maxUnavailable: 1
         enableCertificateOwnerRef: true
-        dns01RecursiveNameservers: "8.8.8.8:53,8.8.4.4:53"
         resources:
           limits:
             memory: 256Mi
@@ -49,15 +42,3 @@ spec:
             enabled: true
             labels:
               release: kube-prometheus-stack
-        cainjector:
-          enabled: true
-          replicaCount: 1
-          resources:
-            limits:
-              memory: 128Mi
-            requests:
-              cpu: 10m
-              memory: 32Mi
-        global:
-          leaderElection:
-            namespace: "cert-manager"

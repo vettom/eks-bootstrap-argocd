@@ -1,9 +1,14 @@
 domain: "vettom.online"
 argocd:
   version: "9.2.0"
-
-gateway:
-  version: "1.6.1"
-  replicas: 1
+externaldns:
+  version: "1.19.0"
+  dnsZones:
+    - "vettom.online"
+    - "*.dev.vettom.online"
+    - "*.prd.vettom.online"
+certmanager:
+  version: "v1.19.2"
+  replicaCount: 1
 metricsserver:
   version: "3.13.0"

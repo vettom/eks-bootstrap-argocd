@@ -1,188 +1,188 @@
-{{- if and .Values.prometheus_stack.enabled -}}
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: kube-prometheus-stack
-spec:
-  destination:
-    namespace: monitoring
-    server: https://kubernetes.default.svc
-  project: core
-  syncPolicy:
-    automated:
-      prune: true
-  sources:
-    - repoURL: https://prometheus-community.github.io/helm-charts
-      chart: kube-prometheus-stack
-      targetRevision: {{ .Values.prometheus_stack.version }}
-      helm:
-        valuesObject:
-          crds:
-            enabled: false
-          commonLabels:
-            prometheus_server: kube-prometheus-stack
-          prometheus:
-            service:
-              type: ClusterIP
-            ingress:
-              enabled: true
-              ingressClassName: {{ .Values.prometheus_stack.ingressClassName }}
-              annotations:
-                nginx.ingress.kubernetes.io/whitelist-source-range: {{ .Values.prometheus_stack.white_list }}
-              hosts:
-                - {{ .Values.prometheus_stack.prom_url_prefix }}.{{ .Values.environment }}.bauerradio.com
-              paths:
-                - /
-              pathType: "Prefix"
-            prometheusSpec:
-              resources:
-                requests:
-                  cpu: {{ .Values.prometheus_stack.prom_cpu_req }}
-                  memory: {{ .Values.prometheus_stack.prom_memory_req }}
-                limits:
-                  cpu: {{ .Values.prometheus_stack.prom_cpu_limit }}
-                  memory: {{ .Values.prometheus_stack.prom_memory_limit }}
-              storageSpec: 
-                volumeClaimTemplate:
-                  spec:
-                    storageClassName:  {{ .Values.prometheus_stack.storageClassName }}
-                    accessModes: ["ReadWriteOnce"]
-                    resources:
-                      requests:
-                        storage: {{ .Values.prometheus_stack.prom_disk }}            
-              serviceMonitorSelector:
-                matchLabels:
-                  release: kube-prometheus-stack
-              enableRemoteWriteReceiver: true
-              additionalScrapeConfigs:
-                - job_name: blackbox_monitoring
-                  metrics_path: /probe
-                  params:
-                    module:
-                      - http_2xx
-                  relabel_configs:
-                    - source_labels:
-                        - __address__
-                      target_label: __param_target
-                    - source_labels:
-                        - __param_target
-                      target_label: instance
-                    - replacement: prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115
-                      target_label: __address__
-                  static_configs:
-                    - targets:
-                      {{ range .Values.prometheus_blackbox.targets }}
-                      - {{ . }}
-                      {{ end }}
-                - job_name: blackbox_httproutes
-                  http_sd_configs:
-                    - url: http://uk-audio-services-promshim.monitoring.svc.cluster.local:5000/httproutes
-                  metrics_path: /probe
-                  params:
-                    module:
-                      - http_2xx
-                  relabel_configs:
-                    - source_labels:
-                        - __address__
-                      target_label: __param_target
-                    - source_labels:
-                        - __param_target
-                      target_label: instance
-                    - replacement: prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115
-                      target_label: __address__
-          grafana:
-            grafana.ini:
-              auth.anonymous:
-                enabled: true
-                org_name: Main Org.
-                org_role: Viewer
-              server:
-                root_url: "https://{{ .Values.prometheus_stack.grafana_url_prefix }}.{{ .Values.environment }}.bauerradio.com"
-            service:
-              type: ClusterIP
-            enabled: true
-            ingress:
-              enabled: true
-              ingressClassName: {{ .Values.prometheus_stack.ingressClassName }}
-              hosts:
-                - {{ .Values.prometheus_stack.grafana_url_prefix }}.{{ .Values.environment }}.bauerradio.com
-              annotations:
-                nginx.ingress.kubernetes.io/whitelist-source-range: {{ .Values.prometheus_stack.white_list }}
-            defaultDashboardsEditable: false
-            persistence:
-              enabled: true
-              type: sts
-              storageClassName: {{ .Values.prometheus_stack.storageClassName }}
-              accessModes: ["ReadWriteOnce"]
-              size: {{ .Values.prometheus_stack.grafana_disk }}
-              finalizers:
-                - kubernetes.io/pvc-protection
-          alertmanager:
-            enabled: true
-            ingress:
-              enabled: true
-              ingressClassName: {{ .Values.prometheus_stack.ingressClassName }}
-              hosts:
-                - {{ .Values.prometheus_stack.alertmanager_url_prefix }}.{{ .Values.environment }}.bauerradio.com
-              annotations:
-                nginx.ingress.kubernetes.io/whitelist-source-range: {{ .Values.prometheus_stack.white_list }}
-          {{- if .Values.prometheus_stack.enable_alerting }}
-            config:
-              global:
-                opsgenie_api_key_file: /etc/alertmanager/secrets/opsgenie_api_key
-                opsgenie_api_url: 'https://api.eu.opsgenie.com/'
-              receivers:
-                - name: 'null'
-                - name: 'opsgenie'
-                  opsgenie_configs:
-                    - send_resolved: true
-                      priority: '{{`{{- $sev := or (.CommonLabels.severity) (.GroupLabels.severity) (.Labels.severity) "none" -}}
-                                  {{- if eq $sev "critical" -}}P1
-                                  {{- else if eq $sev "warning" -}}P2
-                                  {{- else if eq $sev "none" -}}P4
-                                  {{- else -}}P3
-                                  {{- end -}}`}}'
-                      responders:
-                        - name: {{ .Values.prometheus_stack.alert_team | default "Helix - Incident team" }}
-                          type: team
-              route:
-                group_by: ['alertname', 'severity']
-                group_wait: 60s
-                routes:
-                  - receiver: 'opsgenie'
-                    matchers:
-                      - severity=~ "warning|critical"   
-          {{- end }} 
-            alertmanagerSpec:                    
-              storage:
-                volumeClaimTemplate:
-                  spec:
-                    storageClassName: {{ .Values.prometheus_stack.storageClassName }}
-                    accessModes: ["ReadWriteOnce"]
-                    resources:
-                      requests:
-                        storage: {{ .Values.prometheus_stack.alertmanager_disk }}
-          {{- if .Values.prometheus_stack.enable_alerting }}
-              volumes:
-                - name: opsgenie-secret-volume
-                  secret:
-                    secretName: jsm-prometheus-apikey
-              volumeMounts:
-                - name: opsgenie-secret-volume
-                  mountPath: /etc/alertmanager/secrets
-                  readOnly: true   
-          {{- end }}  
-          defaultRules:
-            disabled:
-              KubeCPUOvercommit: true
-              KubeMemoryOvercommit: true
-            rules:
-              etcd: false
-              windows: false
-              kubeControllerManager: false
-              kubeSchedulerAlerting: false
-              kubeApiserverBurnrate: false
-              kubeApiserverHistogram: false
-              kubeApiserverSlos: false
-              kubeDns: false
-{{- end -}}
+# {{- if and .Values.prometheus_stack.enabled -}}
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: kube-prometheus-stack
+# spec:
+#   destination:
+#     namespace: monitoring
+#     server: https://kubernetes.default.svc
+#   project: core
+#   syncPolicy:
+#     automated:
+#       prune: true
+#   sources:
+#     - repoURL: https://prometheus-community.github.io/helm-charts
+#       chart: kube-prometheus-stack
+#       targetRevision: {{ .Values.prometheus_stack.version }}
+#       helm:
+#         valuesObject:
+#           crds:
+#             enabled: false
+#           commonLabels:
+#             prometheus_server: kube-prometheus-stack
+#           prometheus:
+#             service:
+#               type: ClusterIP
+#             ingress:
+#               enabled: true
+#               ingressClassName: {{ .Values.prometheus_stack.ingressClassName }}
+#               annotations:
+#                 nginx.ingress.kubernetes.io/whitelist-source-range: {{ .Values.prometheus_stack.white_list }}
+#               hosts:
+#                 - {{ .Values.prometheus_stack.prom_url_prefix }}.{{ .Values.environment }}.bauerradio.com
+#               paths:
+#                 - /
+#               pathType: "Prefix"
+#             prometheusSpec:
+#               resources:
+#                 requests:
+#                   cpu: {{ .Values.prometheus_stack.prom_cpu_req }}
+#                   memory: {{ .Values.prometheus_stack.prom_memory_req }}
+#                 limits:
+#                   cpu: {{ .Values.prometheus_stack.prom_cpu_limit }}
+#                   memory: {{ .Values.prometheus_stack.prom_memory_limit }}
+#               storageSpec:
+#                 volumeClaimTemplate:
+#                   spec:
+#                     storageClassName:  {{ .Values.prometheus_stack.storageClassName }}
+#                     accessModes: ["ReadWriteOnce"]
+#                     resources:
+#                       requests:
+#                         storage: {{ .Values.prometheus_stack.prom_disk }}
+#               serviceMonitorSelector:
+#                 matchLabels:
+#                   release: kube-prometheus-stack
+#               enableRemoteWriteReceiver: true
+#               additionalScrapeConfigs:
+#                 - job_name: blackbox_monitoring
+#                   metrics_path: /probe
+#                   params:
+#                     module:
+#                       - http_2xx
+#                   relabel_configs:
+#                     - source_labels:
+#                         - __address__
+#                       target_label: __param_target
+#                     - source_labels:
+#                         - __param_target
+#                       target_label: instance
+#                     - replacement: prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115
+#                       target_label: __address__
+#                   static_configs:
+#                     - targets:
+#                       {{ range .Values.prometheus_blackbox.targets }}
+#                       - {{ . }}
+#                       {{ end }}
+#                 - job_name: blackbox_httproutes
+#                   http_sd_configs:
+#                     - url: http://uk-audio-services-promshim.monitoring.svc.cluster.local:5000/httproutes
+#                   metrics_path: /probe
+#                   params:
+#                     module:
+#                       - http_2xx
+#                   relabel_configs:
+#                     - source_labels:
+#                         - __address__
+#                       target_label: __param_target
+#                     - source_labels:
+#                         - __param_target
+#                       target_label: instance
+#                     - replacement: prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115
+#                       target_label: __address__
+#           grafana:
+#             grafana.ini:
+#               auth.anonymous:
+#                 enabled: true
+#                 org_name: Main Org.
+#                 org_role: Viewer
+#               server:
+#                 root_url: "https://{{ .Values.prometheus_stack.grafana_url_prefix }}.{{ .Values.environment }}.bauerradio.com"
+#             service:
+#               type: ClusterIP
+#             enabled: true
+#             ingress:
+#               enabled: true
+#               ingressClassName: {{ .Values.prometheus_stack.ingressClassName }}
+#               hosts:
+#                 - {{ .Values.prometheus_stack.grafana_url_prefix }}.{{ .Values.environment }}.bauerradio.com
+#               annotations:
+#                 nginx.ingress.kubernetes.io/whitelist-source-range: {{ .Values.prometheus_stack.white_list }}
+#             defaultDashboardsEditable: false
+#             persistence:
+#               enabled: true
+#               type: sts
+#               storageClassName: {{ .Values.prometheus_stack.storageClassName }}
+#               accessModes: ["ReadWriteOnce"]
+#               size: {{ .Values.prometheus_stack.grafana_disk }}
+#               finalizers:
+#                 - kubernetes.io/pvc-protection
+#           alertmanager:
+#             enabled: true
+#             ingress:
+#               enabled: true
+#               ingressClassName: {{ .Values.prometheus_stack.ingressClassName }}
+#               hosts:
+#                 - {{ .Values.prometheus_stack.alertmanager_url_prefix }}.{{ .Values.environment }}.bauerradio.com
+#               annotations:
+#                 nginx.ingress.kubernetes.io/whitelist-source-range: {{ .Values.prometheus_stack.white_list }}
+#           {{- if .Values.prometheus_stack.enable_alerting }}
+#             config:
+#               global:
+#                 opsgenie_api_key_file: /etc/alertmanager/secrets/opsgenie_api_key
+#                 opsgenie_api_url: 'https://api.eu.opsgenie.com/'
+#               receivers:
+#                 - name: 'null'
+#                 - name: 'opsgenie'
+#                   opsgenie_configs:
+#                     - send_resolved: true
+#                       priority: '{{`{{- $sev := or (.CommonLabels.severity) (.GroupLabels.severity) (.Labels.severity) "none" -}}
+#                                   {{- if eq $sev "critical" -}}P1
+#                                   {{- else if eq $sev "warning" -}}P2
+#                                   {{- else if eq $sev "none" -}}P4
+#                                   {{- else -}}P3
+#                                   {{- end -}}`}}'
+#                       responders:
+#                         - name: {{ .Values.prometheus_stack.alert_team | default "Helix - Incident team" }}
+#                           type: team
+#               route:
+#                 group_by: ['alertname', 'severity']
+#                 group_wait: 60s
+#                 routes:
+#                   - receiver: 'opsgenie'
+#                     matchers:
+#                       - severity=~ "warning|critical"
+#           {{- end }}
+#             alertmanagerSpec:
+#               storage:
+#                 volumeClaimTemplate:
+#                   spec:
+#                     storageClassName: {{ .Values.prometheus_stack.storageClassName }}
+#                     accessModes: ["ReadWriteOnce"]
+#                     resources:
+#                       requests:
+#                         storage: {{ .Values.prometheus_stack.alertmanager_disk }}
+#           {{- if .Values.prometheus_stack.enable_alerting }}
+#               volumes:
+#                 - name: opsgenie-secret-volume
+#                   secret:
+#                     secretName: jsm-prometheus-apikey
+#               volumeMounts:
+#                 - name: opsgenie-secret-volume
+#                   mountPath: /etc/alertmanager/secrets
+#                   readOnly: true
+#           {{- end }}
+#           defaultRules:
+#             disabled:
+#               KubeCPUOvercommit: true
+#               KubeMemoryOvercommit: true
+#             rules:
+#               etcd: false
+#               windows: false
+#               kubeControllerManager: false
+#               kubeSchedulerAlerting: false
+#               kubeApiserverBurnrate: false
+#               kubeApiserverHistogram: false
+#               kubeApiserverSlos: false
+#               kubeDns: false
+# {{- end -}}
