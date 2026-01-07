@@ -1,22 +1,57 @@
-# apiVersion: cert-manager.io/v1
-# kind: ClusterIssuer
-# metadata:
-#   name: letsencrypt-route53
-#   annotations:
-#     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-#     argocd.argoproj.io/sync-wave: "0"
-# spec:
-#   acme:
-#     email: admin@vettom.online
-#     # server: https://acme-v02.api.letsencrypt.org/directory   # Production service
-#     server: https://acme-staging-v02.api.letsencrypt.org/directory # Staging server
-#     privateKeySecretRef:
-#       name: letsencrypt-route53
-#     solvers:
-#       - selector:
-#           dnsZones:
-#             - vettom.online
-#             - "*.vettom.online"
-#         dns01:
-#           route53:
-#             region: eu-west-1
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-route53
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  acme:
+    email: admin@vettom.online
+    server: https://acme-v02.api.letsencrypt.org/directory   # Production service
+    privateKeySecretRef:
+      name: letsencrypt-route53
+    solvers:
+      - selector:
+          dnsZones:
+            - vettom.online
+            - "*.vettom.online"
+        dns01:
+          route53:
+            region: eu-west-1
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-route53-stage
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  acme:
+    email: admin@vettom.online
+    server: https://acme-staging-v02.api.letsencrypt.org/directory # Staging server
+    privateKeySecretRef:
+      name: letsencrypt-route53-stage
+    solvers:
+      - selector:
+          dnsZones:
+            - vettom.online
+            - "*.vettom.online"
+        dns01:
+          route53:
+            region: eu-west-1
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: test-vettom-online
+  namespace: cert-manager # You can change this to your app's namespace
+spec:
+  # The secret name where the actual TLS cert (crt/key) will be stored
+  secretName: test-vettom-online-tls 
+  dnsNames:
+    - test.vettom.online
+  issuerRef:
+    name: letsencrypt-route53-stage
+    kind: ClusterIssuer
