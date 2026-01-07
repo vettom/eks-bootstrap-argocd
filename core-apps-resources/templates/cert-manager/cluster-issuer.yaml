@@ -14,9 +14,11 @@ spec:
     solvers:
       - selector:
           dnsZones:
-          {{- range .Values.certManager.dnsZones }}
-            - {{ . }}
-          {{- end }}
+            - "vettom.online"
+            - "*.vettom.online"
+          # {{- range .Values.certManager.dnsZones }}
+          #   - {{ . }}
+          # {{- end }}
         dns01:
           route53:
             region: {{ .Values.certManager.route53Region }}
