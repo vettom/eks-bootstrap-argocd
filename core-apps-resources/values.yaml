@@ -1,0 +1,10 @@
+certManager:
+  clusterIssuer: letsencrypt-route53
+  dnsZones: []
+  acmeServer: https://acme-v02.api.letsencrypt.org/directory
+  route53Region: eu-west-1
+
+externalGateway:
+  name: external-gateway
+  hostname: 
+  namespace: envoy-gateway-system

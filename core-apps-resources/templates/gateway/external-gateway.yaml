@@ -1,25 +1,9 @@
-apiVersion: gateway.envoyproxy.io/v1alpha1
-kind: EnvoyProxy
-metadata:
-  name: external-proxy-config
-  namespace: envoy-gateway-system
-  annotations:
-    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-    argocd.argoproj.io/sync-wave: "10"
-spec:
-  provider:
-    type: Kubernetes
-    kubernetes:
-      envoyService:
-        annotations:
-          service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
-          service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
-          service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true
+
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
-  name: external-gatewayclass
+  name: "{{ .Values.externalGateway.name }}-class"
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
     argocd.argoproj.io/sync-wave: "10"
@@ -34,14 +18,14 @@ spec:
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: external-gateway
-  namespace: envoy-gateway-system
+  name: "{{ .Values.externalGateway.name }}"
+  namespace: "{{ .Values.externalGateway.namespace }}"
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
     argocd.argoproj.io/sync-wave: "10"
-    cert-manager.io/cluster-issuer: letsencrypt-route53
+    cert-manager.io/cluster-issuer: "{{ .Values.certManager.clusterIssuer }}"
 spec:
-  gatewayClassName: external-gatewayclass
+  gatewayClassName: "{{ .Values.externalGateway.name }}-class"
   listeners:
     - name: http
       port: 80
@@ -50,7 +34,7 @@ spec:
         namespaces:
           from: All
     - name: https
-      hostname: "*.vettom.online"
+      hostname: {{ .Values.externalGateway.hostname }}
       port: 443
       protocol: HTTPS
       allowedRoutes:
@@ -60,5 +44,5 @@ spec:
         certificateRefs:
           - kind: Secret
             group: ""
-            name: "vettom-online-tls-cert"
-            namespace: envoy-gateway-system
+            name: "{{ .Values.externalGateway.hostname }}-tls-cert"
+            namespace: {{ .Values.externalGateway.namespace }}
