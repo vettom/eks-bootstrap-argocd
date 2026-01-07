@@ -1,6 +1,6 @@
 certManager:
   clusterIssuer: letsencrypt-route53
-  dnsZones: []
+  dnsZones:
   acmeServer: https://acme-v02.api.letsencrypt.org/directory
   route53Region: eu-west-1
 
