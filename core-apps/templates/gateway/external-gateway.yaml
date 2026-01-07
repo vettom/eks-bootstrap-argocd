@@ -60,5 +60,5 @@ spec:
         certificateRefs:
           - kind: Secret
             group: ""
-            name: "vettom-online-tls"
+            name: "vettom-online-new-tls"
             namespace: envoy-gateway-system
