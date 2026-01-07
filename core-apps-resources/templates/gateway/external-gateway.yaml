@@ -12,7 +12,7 @@ spec:
   parametersRef:
     group: gateway.envoyproxy.io
     kind: EnvoyProxy
-    name: external-proxy-config
+    name: "{{ .Values.externalGateway.name }}-proxy-config"
     namespace: envoy-gateway-system
 ---
 apiVersion: gateway.networking.k8s.io/v1
