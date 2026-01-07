@@ -2,7 +2,7 @@ apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: EnvoyProxy
 metadata:
   name: "{{ .Values.externalGateway.name }}-proxy-config"
-  namespace: {{ .Values.externalGateway.namespace }}
+  namespace: "{{ .Values.externalGateway.namespace }}"
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
     argocd.argoproj.io/sync-wave: "10"

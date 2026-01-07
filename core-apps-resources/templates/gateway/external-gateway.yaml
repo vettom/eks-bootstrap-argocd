@@ -34,7 +34,7 @@ spec:
         namespaces:
           from: All
     - name: https
-      hostname: {{ .Values.externalGateway.hostname }}
+      hostname: "{{ .Values.externalGateway.hostname }}"
       port: 443
       protocol: HTTPS
       allowedRoutes:
@@ -45,4 +45,4 @@ spec:
           - kind: Secret
             group: ""
             name: "{{ .Values.externalGateway.hostname }}-tls-cert"
-            namespace: {{ .Values.externalGateway.namespace }}
+            namespace: "{{ .Values.externalGateway.namespace }}"
