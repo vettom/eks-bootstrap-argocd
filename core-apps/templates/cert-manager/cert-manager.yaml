@@ -26,6 +26,10 @@ spec:
           keep: true
         namespace: "cert-manager"
         replicaCount: {{ .Values.certmanager.replicaCount }}
+        config:
+          apiVersion: controller.config.cert-manager.io/v1alpha1
+          kind: ControllerConfiguration
+          enableGatewayAPI: true
         securityContext:
           fsGroup: 1001
         serviceAccount:
