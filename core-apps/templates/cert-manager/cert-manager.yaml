@@ -31,6 +31,7 @@ spec:
         serviceAccount:
           create: true
         enableCertificateOwnerRef: true
+        dns01RecursiveNameservers: "8.8.8.8:53,8.8.4.4:53"
         resources:
           limits:
             memory: 256Mi
