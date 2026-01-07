@@ -46,6 +46,19 @@ spec:
                     namespace: {{ .Values.externalGateway.namespace }}
                     kind: Gateway 
                     group: gateway.networking.k8s.io
+            defaultRules:
+              disabled:
+                KubeCPUOvercommit: true
+                KubeMemoryOvercommit: true
+              rules:
+                etcd: false
+                windows: false
+                kubeControllerManager: false
+                kubeSchedulerAlerting: false
+                kubeApiserverBurnrate: false
+                kubeApiserverHistogram: false
+                kubeApiserverSlos: false
+                kubeDns: false
           grafana:
             grafana.ini:
               auth.anonymous:
