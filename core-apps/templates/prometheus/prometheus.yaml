@@ -32,7 +32,20 @@ spec:
               serviceMonitorSelector:
                 matchLabels:
                   release: kube-prometheus-stack
-              enableRemoteWriteReceiver: true
+            route:
+              main:
+                enabled: true
+                apiVersion: gateway.networking.k8s.io/v1
+                kind: HTTPRoute
+                annotations: {}
+                labels: {}
+                hostnames:
+                  - prom.vettom.online
+                parentRefs:
+                  - name: external-gateway
+                    namespace: envoy-gateway-system
+                    kind: Gateway 
+                    group: gateway.networking.k8s.io
           grafana:
             grafana.ini:
               auth.anonymous:
