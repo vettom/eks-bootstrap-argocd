@@ -44,5 +44,5 @@ spec:
         certificateRefs:
           - kind: Secret
             group: ""
-            name: "{{ .Values.externalGateway.hostname }}-tls-cert"
+            name: "{{ .Values.externalGateway.name }}-tls-cert"
             namespace: "{{ .Values.externalGateway.namespace }}"
