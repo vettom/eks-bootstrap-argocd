@@ -11,7 +11,7 @@ spec:
     # server: https://acme-v02.api.letsencrypt.org/directory   # Production service
     server: https://acme-staging-v02.api.letsencrypt.org/directory # Staging server
     privateKeySecretRef:
-      name: letsencrypt-route53
+      name: letsencrypt-route53-staging
     solvers:
       - selector:
           dnsZones:
