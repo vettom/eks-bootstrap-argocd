@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: envoy-gateway
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-8"
 spec:
   project: default
   source:
@@ -23,32 +25,3 @@ spec:
     automated:
       prune: true
       selfHeal: true
----
-# apiVersion: argoproj.io/v1alpha1
-# kind: Application
-# metadata:
-#   name: gateway
-#   annotations:
-#     argocd.argoproj.io/sync-wave: "-8"
-#   finalizers:
-#     - resources-finalizer.argocd.argoproj.io
-# spec:
-#   destination:
-#     namespace: gateway
-#     server: https://kubernetes.default.svc
-#   project: default
-#   syncPolicy:
-#     automated: {}
-#     syncOptions:
-#       - CreateNamespace=true
-#   source:
-#     repoURL: docker.io/envoyproxy
-#     chart: gateway-helm
-#     targetRevision: {{ .Values.gateway.version }}
-#     helm:
-#       valuesObject:
-#         deployment:
-#           replicas: {{ .Values.gateway.replicas }}
-#         certgen:
-#           job:
-#             ttlSecondsAfterFinished: 60
