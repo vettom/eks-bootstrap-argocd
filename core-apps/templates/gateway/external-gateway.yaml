@@ -39,7 +39,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
     argocd.argoproj.io/sync-wave: "10"
-    cert-manager.io/cluster-issuer: letsencrypt-route53-stage
+    cert-manager.io/cluster-issuer: letsencrypt-route53
 spec:
   gatewayClassName: external-gatewayclass
   listeners:
@@ -60,5 +60,5 @@ spec:
         certificateRefs:
           - kind: Secret
             group: ""
-            name: "vettom-online-tls"
+            name: "vettom-online-tls-cert"
             namespace: envoy-gateway-system
