@@ -22,7 +22,7 @@ metricsserver:
 
 gateway:
   version: "v1.6.1"
-  replicas: 1
+  replicas: 2
 
 prometheus_crds:
   version: "25.0.1"
