@@ -54,8 +54,36 @@ spec:
                 org_role: Viewer
               server:
                 root_url: "https://{{ .Values.prometheus_stack.grafana_url }}"
+            route:
+              main:
+                enabled: true
+                apiVersion: gateway.networking.k8s.io/v1
+                kind: HTTPRoute
+                annotations: {}
+                labels: {}
+                hostnames:
+                  - {{ .Values.prometheus_stack.grafana_url }}
+                parentRefs:
+                  - name: {{ .Values.externalGateway.name }}
+                    namespace: {{ .Values.externalGateway.namespace }}
+                    kind: Gateway 
+                    group: gateway.networking.k8s.io            
             service:
               type: ClusterIP
             enabled: true
           alertmanager:
             enabled: true
+            route:
+              main:
+                enabled: true
+                apiVersion: gateway.networking.k8s.io/v1
+                kind: HTTPRoute
+                annotations: {}
+                labels: {}
+                hostnames:
+                  - {{ .Values.prometheus_stack.alertmanager_url }}
+                parentRefs:
+                  - name: {{ .Values.externalGateway.name }}
+                    namespace: {{ .Values.externalGateway.namespace }}
+                    kind: Gateway 
+                    group: gateway.networking.k8s.io
