@@ -40,22 +40,22 @@ spec:
                 annotations: {}
                 labels: {}
                 hostnames:
-                  - prom.vettom.online
+                  - {{ .Values.prometheus_stack.prometheus_url }}
                 parentRefs:
-                  - name: external-gateway
-                    namespace: envoy-gateway-system
+                  - name: {{ .Values.externalGateway.name }}
+                    namespace: {{ .Values.externalGateway.namespace }}
                     kind: Gateway 
                     group: gateway.networking.k8s.io
           grafana:
             grafana.ini:
               auth.anonymous:
                 enabled: true
-                org_name: Main Org.
+                org_name: MyOrg
                 org_role: Viewer
               server:
-                root_url: "https://{{ .Values.prometheus_stack.grafana_url_prefix }}.{{ .Values.domain }}"
+                root_url: "https://{{ .Values.prometheus_stack.grafana_url }}"
             service:
               type: ClusterIP
             enabled: true
           alertmanager:
-            enabled: false
+            enabled: true

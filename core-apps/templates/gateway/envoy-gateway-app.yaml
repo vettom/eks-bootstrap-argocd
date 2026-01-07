@@ -12,11 +12,11 @@ spec:
   source:
     chart: gateway-helm
     repoURL: docker.io/envoyproxy
-    targetRevision: {{ .Values.gateway.version }}
+    targetRevision: {{ .Values.envoyGateway.version }}
     helm:
       valuesObject:
         deployment:
-          replicas: {{ .Values.gateway.replicas }}
+          replicas: {{ .Values.envoyGateway.replicas }}
   destination:
     namespace: envoy-gateway-system
     server: https://kubernetes.default.svc

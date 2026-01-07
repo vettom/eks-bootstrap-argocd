@@ -3,8 +3,8 @@ kind: Application
 metadata:
   name: 01-core-apps-resources
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-options: Prune=true
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   destination:
     namespace: argocd
@@ -24,4 +24,8 @@ spec:
           externalGateway:
             hostname: "*.vettom.online"
   syncPolicy:
-    automated: {}
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

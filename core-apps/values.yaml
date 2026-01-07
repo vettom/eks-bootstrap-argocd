@@ -1,32 +1,33 @@
-domain: "vettom.online"
-
-cluster_name: "eks-auto-demo"
+cluster_name: 
 
 argocd:
-  version: "9.2.0"
-  argo_url_prefix: "argocd"
+  version: 
+  argo_url_prefix: 
 
 externaldns:
-  version: "1.19.0"
-  dnsZones:
-    - "vettom.online"
-    - "*.dev.vettom.online"
-    - "*.prd.vettom.online"
+  version: 
+  dnsZones: []
 
 certmanager:
-  version: "v1.19.2"
+  version: 
   replicaCount: 1
 
 metricsserver:
-  version: "3.13.0"
+  version: 
 
-gateway:
-  version: "v1.6.1"
-  replicas: 2
+envoyGateway:
+  version: 
+  replicas: 1
+
+externalGateway:
+  name: external-gateway
+  namespace: envoy-gateway-system
 
 prometheus_crds:
-  version: "25.0.1"
+  version: 
   
 prometheus_stack:
-  version: "80.6.0"
-  grafana_url_prefix: "grafana"
+  version: 
+  prometheus_url: 
+  alertmanager_url: 
+  grafana_url: 
