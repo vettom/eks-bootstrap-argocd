@@ -12,7 +12,7 @@ certmanager:
   version: 
   replicaCount: 1
 
-metricsserver:
+metricsServer:
   version: 
 
 envoyGateway:
